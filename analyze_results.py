@@ -1,10 +1,14 @@
+from typing import List, Tuple, Dict
+
 import pickle
 from sklearn.metrics import precision_recall_fscore_support
 
-def convert_label2index(label):
+
+def convert_label2index(label: str) -> int:
     return 1 if label == "pos" else 0
 
-def get_labels(complete_dict):
+
+def get_labels(complete_dict: Dict) -> Tuple(List[int]):
     true_labels = []
     pred_labels = []
     for _, (_, true_label, result) in complete_dict.items():
@@ -20,10 +24,15 @@ def get_labels(complete_dict):
             pred_labels.append(convert_label2index("neg"))
     return (true_labels, pred_labels)
 
-def compute_metrics(labels):
+
+def compute_metrics(labels: Tuple(List[int])) -> None:
     true_labels, pred_labels = labels
-    score = precision_recall_fscore_support(true_labels, pred_labels, average='macro')         
+    score = precision_recall_fscore_support(true_labels,
+                                            pred_labels,
+                                            average="macro"
+                                            )
     print(f"Precision:{score[0]} \nRecall:{score[1]} \nFscore: {score[2]}")
+
 
 if __name__ == "__main__":
     complete_dict = pickle.load(open("orig_w_results.p", "rb"))
