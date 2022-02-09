@@ -152,7 +152,8 @@ cython_debug/
 #.idea/
 
 # custom data sets
-aclImdb/
+orig_data/
+processed_data/
 
 # MacOS files
 .DS_Store
