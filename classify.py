@@ -6,7 +6,8 @@ import boto3
 
 from comprehend_request import send_batch_request
 
-DIR_NAME = "aclImdb/train"
+DIR_NAME = "orig_data/aclImdb/train"
+RESULTS_PATH_NAME = "processed_data/aclImdb/"
 EX_COUNT = 10
 
 def create_example_list(dir_name, polar, num):
@@ -27,20 +28,23 @@ def create_dataset(dir_name, ex_count):
     random.shuffle(examples_labeled)
     return examples_labeled
 
-def save_results(dataset, results):
+def save_results(dataset, results, path):
     complete_dict = {}
     for index, ((text,label), result_dict) in enumerate(zip(dataset, results)):
         complete_dict[index] = [text, label, result_dict]
-    pickle.dump(complete_dict, open("orig_w_results.p", "wb"))
+
+    path_name = os.path.join(path, f"orig_w_results_{len(complete_dict.keys())}",)
+    pickle.dump(complete_dict, open(path_name, "wb"))
         
-if __name__ == "__main__":
+def classify():
     comprehend = boto3.client(service_name='comprehend')
 
     examples_labeled = create_dataset(DIR_NAME, EX_COUNT)
     
-    examples, labels = list(zip(*examples_labeled))
+    examples, _ = list(zip(*examples_labeled))
     classification_results = send_batch_request(comprehend, examples)
 
-    save_results(examples_labeled, classification_results)
+    save_results(examples_labeled, classification_results, RESULTS_PATH_NAME)
 
-    
+if __name__ == "__main__":
+    classify()
