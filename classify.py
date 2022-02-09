@@ -1,5 +1,6 @@
 import os
 import random
+import pickle
 
 import boto3
 
@@ -26,7 +27,12 @@ def create_dataset(dir_name, ex_count):
     random.shuffle(examples_labeled)
     return examples_labeled
 
-
+def save_results(dataset, results):
+    complete_dict = {}
+    for index, ((text,label), result_dict) in enumerate(zip(dataset, results)):
+        complete_dict[index] = [text, label, result_dict]
+    pickle.dump(complete_dict, open("orig_w_results.p", "wb"))
+        
 if __name__ == "__main__":
     comprehend = boto3.client(service_name='comprehend')
 
@@ -35,4 +41,6 @@ if __name__ == "__main__":
     examples, labels = list(zip(*examples_labeled))
     classification_results = send_batch_request(comprehend, examples)
 
+    save_results(examples_labeled, classification_results)
 
+    
