@@ -4,7 +4,13 @@ import pickle
 import argparse
 import os
 
-from sklearn.metrics import precision_recall_fscore_support
+import matplotlib.pyplot as plt
+from sklearn.metrics import (
+                             confusion_matrix,
+                             precision_recall_fscore_support,
+                             accuracy_score,
+                             ConfusionMatrixDisplay)
+
 
 RESULTS_DIR = "processed_data/"
 IMDB_DIR = "aclImdb/"
@@ -56,11 +62,26 @@ def get_labels(complete_dict: Dict, datatype: str) -> Tuple[List[int]]:
 
 def compute_metrics(labels: Tuple[List[int]]) -> None:
     true_labels, pred_labels = labels
-    score = precision_recall_fscore_support(true_labels,
-                                            pred_labels,
-                                            average=None
-                                            )
-    print(f"Precision:{score[0]} \nRecall:{score[1]} \nFscore: {score[2]}")
+    accuracy = accuracy_score(true_labels, pred_labels)
+    print(f"Accuracy: {accuracy}")
+    scores = precision_recall_fscore_support(true_labels,
+                                             pred_labels,
+                                             average=None)
+    print(f"Precision:{scores[0]} \nRecall:{scores[1]} \nFscore: {scores[2]}")
+    conf_matrix = confusion_matrix(true_labels, pred_labels)
+
+    if len(set(pred_labels)) == 2:
+        disp = ConfusionMatrixDisplay(confusion_matrix=conf_matrix,
+                                      display_labels=["negative", "positive"])
+
+    if len(set(pred_labels)) == 3:
+        disp = ConfusionMatrixDisplay(confusion_matrix=conf_matrix,
+                                      display_labels=["negative",
+                                                      "positive",
+                                                      "neutral"])
+
+    disp.plot()
+    plt.show()
 
 
 if __name__ == "__main__":
