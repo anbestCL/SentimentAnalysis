@@ -8,11 +8,11 @@ Using [```DetectSentiment```](https://docs.aws.amazon.com/comprehend/latest/dg/A
 
 ## How to Use
 
-Need to specify the data type (Imdb: ```imdb``` or Twitter: ```twitter```) and size of sample to get classification via AWS Comprehend. 
+Need to specify the data type (Imdb: ```imdb``` or Twitter: ```twitter```) and size of sample to get classification via AWS Comprehend.
 ```classify.py --data_type imdb --sample_size 1000```
 
 Visualize classification quality for respective data type:
-```analyze_results.py --data_type imdb```
+```results_processer.py```
 
 ## Notes
 
