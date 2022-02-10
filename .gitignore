@@ -157,6 +157,7 @@ cython_debug/
 # custom data sets
 orig_data/
 processed_data/
+results/
 
 # MacOS files
 .DS_Store
