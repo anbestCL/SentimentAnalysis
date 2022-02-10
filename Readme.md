@@ -16,19 +16,18 @@ Visualize classification quality for respective data type:
 
 ## Notes
 
-Amazon Comprehend classifies as ```POSITIIVE```, ```NEGATIVE```, ```NEUTRAL``` or ```MIXED```. 
+Amazon Comprehend classifies as ```POSITIIVE```, ```NEGATIVE```, ```NEUTRAL``` or ```MIXED```.
 
-IMDB movie reviews consider only binary classification into positive and negative. 
+IMDB movie reviews consider only binary classification into positive and negative.
 
 Twitter dataset considers positive, negative and neutral, however, it is classified according to the use of emoticons in the tweets. No longer up-to-date.
 
-### Comparison: Comprehend vs. custom
+### Comparison: AWS vs. Custom
 
 | AWS  | Custom  |
 |---|---|
 | + easy to set up  | - longer set up, model training required  |
 | + immediate classification result  |  + fast results once model trained |
-| + trained on ??? |     |
+| - no model details available | - model self-defined |
 | - no customisation possible | + absolute customisation possible |
 | - pricey | - cheap because private GPU can be used|
-
