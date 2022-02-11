@@ -155,7 +155,8 @@ cython_debug/
 .vscode/
 
 # custom data sets
-orig_data/
+data/
+csv_data/
 processed_data/
 results/
 
