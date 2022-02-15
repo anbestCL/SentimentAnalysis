@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List, Tuple
 import pickle
 
 import pandas as pd
@@ -10,16 +10,22 @@ from sklearn.metrics import (
                              ConfusionMatrixDisplay)
 
 
-class Results:
-    def __init__(self, path: str):
-        self._data = pickle.load(open(path, "rb"))
+class ResultsProcesser:
+    def __init__(self, data, data_name: str) -> None:
+        self._data = data
+        self._data_name = data_name
 
-        if "twitter" in path:
-            self.text_type = "tweets"
-        elif "Imdb" in path:
-            self.text_type = "reviews"
+    @classmethod
+    def fromfilename(cls, filename: str, data_name: str):
+        data = pickle.load(open(filename, "rb"))
+        return cls(data, data_name)
 
-    def metrics(self):
+    @classmethod
+    def fromdict(cls, datadict: Dict[int, Tuple[str, int or str, Dict]],
+                 data_name: str):
+        return cls(datadict, data_name)
+
+    def metrics(self) -> None:
         metrics = self._compute_metrics()
         self._show_metrics(metrics)
 
@@ -39,16 +45,18 @@ class Results:
     def _index2index(self, index: int) -> int:
         return 1 if index == 4 else index
 
-    def _rearrange(self, data_dict):
+    def _rearrange(self,
+                   data_dict: Dict[int, Tuple[str, str or int, Dict]]
+                   ) -> List[List]:
         return list(zip(*data_dict.values()))
 
-    def _filter(self, zipped_list):
+    def _filter(self, zipped_list: List[List]) -> Tuple[List]:
         filtered_texts, filtered_labels, filtered_sents = [], [], []
         for (text, true_label, sent) in zipped_list:
             if sent == "Mixed":
                 continue
             if sent == "Neutral":
-                if self.text_type == "reviews":
+                if self._data_name == "imdb":
                     continue
                 # TODO: SIMPLIFY
                 else:
@@ -61,23 +69,37 @@ class Results:
                 filtered_sents.append(sent)
         return (filtered_texts, filtered_labels, filtered_sents)
 
-    def _get_numeric_labels(self, data_dict):
+    def _get_numeric_labels(self,
+                            data_dict: Dict[int, Tuple[str, str or int, Dict]],
+                            label_type: str
+                            ) -> Tuple[List]:
         text, true_labels, sentiments = self._rearrange(data_dict)
 
         sents, _ = self._extract_sentiments(sentiments)
         _, true_labels, sents = self._filter(zip(text, true_labels, sents))
 
-        if self.text_type == "tweets":
+        if label_type == "index":
             true_labels = list(map(self._index2index, true_labels))
-        elif self.text_type == "reviews":
+        elif label_type == "shortlabel":
             true_labels = list(map(self._shortlabel2index, true_labels))
+        elif label_type == "longlabel":
+            true_labels = list(map(self._longlabel2index, true_labels))
 
         sents = list(map(self._longlabel2index, sents))
 
         return (true_labels, sents)
 
-    def _compute_metrics(self):
-        true_labels, pred_labels = self._get_numeric_labels(self._data)
+    def _compute_metrics(self) -> Dict[str, float]:
+        if self._data[0][1].isdigit():
+            true_labels, pred_labels = self._get_numeric_labels(self._data,
+                                                                "index")
+        elif self._data[0][1] in ("pos", "neg"):
+            true_labels, pred_labels = self._get_numeric_labels(self._data,
+                                                                "shortlabel")
+        else:
+            true_labels, pred_labels = self._get_numeric_labels(self._data,
+                                                                "longlabel")
+
         accuracy = accuracy_score(true_labels, pred_labels)
 
         precision, recall, fscore, _ = precision_recall_fscore_support(
@@ -88,7 +110,7 @@ class Results:
                 "Recall": recall, "Fscore": fscore,
                 "ConfusionMatrix": conf_matrix}
 
-    def _show_metrics(self, metrics: Dict):
+    def _show_metrics(self, metrics: Dict[str, float]) -> None:
         print(f'Accuracy: {metrics["Accuracy"]}')
         print(f'Precision:{metrics["Precision"]} \n'
               f'Recall:{metrics["Recall"]} \n'
@@ -109,11 +131,12 @@ class Results:
         disp.plot()
         plt.show()
 
-    def save2csv(self):
+    def save2csv(self) -> None:
         df = self._transform2df(self._data)
-        df.to_csv(f"results/{self.text_type}_results.csv")
+        df.to_csv(f"results/{self._data_name}_results.csv")
 
-    def _extract_sentiments(self, sentiments):
+    def _extract_sentiments(self, sentiments: Dict[str, str or Dict]
+                            ) -> Tuple[List]:
         sents = []
         sent_scores = []
         for entry in sentiments:
@@ -122,7 +145,7 @@ class Results:
             sent_scores.append(entry["SentimentScore"][sent])
         return (sents, sent_scores)
 
-    def _index2label(self, index):
+    def _index2label(self, index: int) -> str:
         if index == 0:
             return "Negative"
         elif index == 2:
@@ -130,16 +153,17 @@ class Results:
         elif index == 4:
             return "Positive"
 
-    def _label2long(self, label):
+    def _label2long(self, label: str) -> str:
         return "Positive" if label == "pos" else "Negative"
 
-    def _transform2df(self, data_dict):
-        content = list(zip(*data_dict.values()))
+    def _transform2df(self, data_dict: Dict[int, Tuple[str, int or str, Dict]]
+                      ) -> pd.DataFrame:
+        content = self._rearrange(data_dict)
         texts, true_labels, sentiments = content
 
-        if self.text_type == "tweets":
+        if self._data_name == "twitter":
             true_labels = list(map(self._index2label, true_labels))
-        elif self.text_type == "reviews":
+        elif self._data_name == "imdb":
             true_labels = list(map(self._label2long, true_labels))
 
         sents, sent_scores = self._extract_sentiments(sentiments)
@@ -151,7 +175,23 @@ class Results:
 
 
 if __name__ == "__main__":
-    path = "processed_data/twitter/orig_w_results_1000"
-    path2 = "processed_data/aclImdb/orig_w_results_992"
-    results = Results(path)
+    # path = "processed_data/twitter/orig_w_results_1000"
+    # path2 = "processed_data/aclImdb/orig_w_results_992"
+    # results = ResultsProcesser.fromfilename(path, "twitter")
+
+    text = ('@switchfoot http://twitpic.com/2y1zl'
+            '- Awww, that\'s a bummer.  You shoulda got'
+            'David Carr of Third Day to do it. ;D')
+    sentiment = {
+        'Sentiment': 'NEGATIVE',
+        'SentimentScore': {
+            'Positive': 0.10567719489336014,
+            'Negative': 0.6624420881271362,
+            'Neutral': 0.22724494338035583,
+            'Mixed': 0.004635817836970091
+        }
+    }
+    test_dict = {0: [text, "Positive", sentiment],
+                 1: [text, "Negative", sentiment]}
+    results = ResultsProcesser.fromdict(test_dict, "twitter")
     results.metrics()
