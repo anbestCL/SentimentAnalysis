@@ -21,7 +21,8 @@ TWITTER_LEN = 1600000
 
 class DataLoader:
     def __init__(self, data_name: str, file_path: str,
-                 sample_size: int = 0, preprocess: bool = True):
+                 sample_size: int = 0, preprocess: bool = True
+                 ) -> None:
 
         self._data_name = data_name
         self._sample_size = sample_size
@@ -29,7 +30,8 @@ class DataLoader:
         self._dataset = self._create_dataset(file_path, preprocess)
         self.data = self._df2list(self._dataset)
 
-    def _create_dataset(self, file_path: str, preprocess: bool):
+    def _create_dataset(self, file_path: str, preprocess: bool
+                        ) -> None:
         if self._data_name == "airline":
             self._dataset = self._create_airline_dataset(file_path)
 
@@ -87,7 +89,7 @@ class DataLoader:
         return tweets[["text", "sentiment"]]
 
     def _read_imdb_sample(self, dir_name: str, polar: str,
-                          num: int) -> List[Tuple]:
+                          num: int) -> List[str]:
         reviews = []
         subdir_name = os.path.join(dir_name, polar)
         sample = random.sample(os.listdir(subdir_name), num)
@@ -120,7 +122,7 @@ class DataLoader:
         filtered.text = filtered.text.str.replace(pattern, "", regex=True)
         return filtered
 
-    def save2csv(self):
+    def save2csv(self) -> None:
         self._dataset.to_csv(f"csv_data/{self._data_name}.csv")
 
 

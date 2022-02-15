@@ -1,4 +1,4 @@
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Tuple, Dict
 import pickle
 
 import boto3
@@ -42,7 +42,7 @@ class SentimentClassifier:
         result = send_single_request(comprehend, text)
         print(result["Sentiment"])
 
-    def _create_result_dict(self):
+    def _create_result_dict(self) -> Dict[int, List]:
         complete_dict = {}
         for index, (text, label, result_dict) in enumerate(
             zip(self._data, self._labels, self.results)
